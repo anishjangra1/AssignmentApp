@@ -59,13 +59,33 @@ class ImageAdapter(
 
     private fun loadImage(imageUrl: String, imageView: ImageView) {
         coroutineScope.launch {
-            val bitmap = loadImageFromUrl(imageUrl)
+            val bitmap = loadImageFromDiskCache(imageUrl) ?: loadImageFromUrl(imageUrl)
             bitmap?.let {
                 withContext(Dispatchers.Main) {
                     memoryCache.put(imageUrl, it)
                     imageView.setImageBitmap(it)
                 }
             }
+        }
+    }
+
+    private fun loadImageFromDiskCache(key: String): Bitmap? {
+        val file = File(diskCacheDir, key.hashCode().toString())
+        return if (file.exists()) {
+            BitmapFactory.decodeFile(file.absolutePath)
+        } else {
+            null
+        }
+    }
+
+    private fun saveToDiskCache(key: String, bitmap: Bitmap) {
+        val file = File(diskCacheDir, key.hashCode().toString())
+        try {
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 
@@ -78,12 +98,56 @@ class ImageAdapter(
             val inputStream = connection.inputStream
             val bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream.close()
+            bitmap?.let { saveToDiskCache(urlString, it) }
             return bitmap
         } catch (e: IOException) {
             e.printStackTrace()
         }
         return null
     }
+
+
+//    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+//        private val imageView: ImageView = itemView.findViewById(R.id.image_view)
+//
+//        fun bind(article: Article) {
+//            val imageUrl = "${article.thumbnail.domain}/${article.thumbnail.basePath}/0/${article.thumbnail.key}"
+//            val cachedBitmap = memoryCache.get(imageUrl)
+//            if (cachedBitmap != null) {
+//                imageView.setImageBitmap(cachedBitmap)
+//            } else {
+//                loadImage(imageUrl,imageView)
+//            }
+//        }
+//    }
+//
+//    private fun loadImage(imageUrl: String, imageView: ImageView) {
+//        coroutineScope.launch {
+//            val bitmap = loadImageFromUrl(imageUrl)
+//            bitmap?.let {
+//                withContext(Dispatchers.Main) {
+//                    memoryCache.put(imageUrl, it)
+//                    imageView.setImageBitmap(it)
+//                }
+//            }
+//        }
+//    }
+//
+//    private fun loadImageFromUrl(urlString: String): Bitmap? {
+//        try {
+//            val url = URL(urlString)
+//            val connection = url.openConnection() as HttpURLConnection
+//            connection.doInput = true
+//            connection.connect()
+//            val inputStream = connection.inputStream
+//            val bitmap = BitmapFactory.decodeStream(inputStream)
+//            inputStream.close()
+//            return bitmap
+//        } catch (e: IOException) {
+//            e.printStackTrace()
+//        }
+//        return null
+//    }
 
     fun updateData(newArticles: List<Article>) {
         articles = newArticles
