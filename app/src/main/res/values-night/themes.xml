@@ -22,10 +22,10 @@
              drawable. One of these is required. -->
         <item name="windowSplashScreenAnimatedIcon">@mipmap/app_icon</item>
         <!-- Required for animated icons. -->
-        <item name="windowSplashScreenAnimationDuration">200</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
 
         <!-- Set the theme of the Activity that directly follows your splash
         screen. This is required. -->
-        <item name="postSplashScreenTheme">@style/Theme.AssignmentApp</item>
+        <item name="postSplashScreenTheme">@style/Theme.Design.Light</item>
     </style>
 </resources>
